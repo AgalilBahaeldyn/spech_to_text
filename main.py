@@ -2,11 +2,21 @@ import tkinter as tk
 from tkinter import messagebox
 import speech_recognition as sr
 import threading
+import pyautogui
+import keyboard  # ไลบรารีสำหรับ Global Hotkey
 
 # สร้าง Recognizer สำหรับการบันทึกเสียง
 recognizer = sr.Recognizer()
 recording = False  # สถานะการบันทึกเสียง
 audio_data = []    # เก็บข้อมูลเสียงทั้งหมดที่บันทึกได้
+
+# ฟังก์ชันสำหรับเริ่มและหยุดการฟังเมื่อกด F7
+def toggle_recording():
+    global recording
+    if not recording:
+        start_recording()
+    else:
+        stop_recording()
 
 # ฟังก์ชันสำหรับเริ่มการฟัง
 def start_recording():
@@ -46,28 +56,33 @@ def transcribe_audio():
             full_text += "[ไม่สามารถแปลงเสียงเป็นข้อความได้] "
         except sr.RequestError as e:
             full_text += f"[ข้อผิดพลาดในการเชื่อมต่อ: {e}] "
+    
     result_text.set("ข้อความที่แปลงได้: " + full_text.strip())
+    # ส่งข้อความไปยังโปรแกรมที่โฟกัสอยู่ (เช่น HOSxP)
+    pyautogui.write(full_text.strip())
 
 # สร้างหน้าต่างหลัก
 root = tk.Tk()
 root.title("โปรแกรมบันทึกเสียงและแปลงเสียงเป็นข้อความ")
 root.geometry("400x300")
 
+# ตั้งค่าให้หน้าต่างอยู่บนสุดเสมอ
+root.attributes("-topmost", True)
+
 # ข้อความแสดงผลลัพธ์
 result_text = tk.StringVar()
 result_text.set("")
 
 # ปุ่มเริ่มบันทึกเสียง
-start_button = tk.Button(root, text="เริ่มบันทึกเสียง", command=start_recording, bg="green", fg="white", font=("Arial", 12))
+start_button = tk.Button(root, text="เริ่ม/หยุดบันทึกเสียง (F7)", command=toggle_recording, bg="green", fg="white", font=("Arial", 12))
 start_button.pack(pady=20)
-
-# ปุ่มหยุดบันทึกเสียง
-stop_button = tk.Button(root, text="หยุดบันทึกเสียง", command=stop_recording, bg="red", fg="white", font=("Arial", 12))
-stop_button.pack(pady=10)
 
 # แสดงผลข้อความที่แปลงได้
 result_label = tk.Label(root, textvariable=result_text, wraplength=350, font=("Arial", 10), justify="left")
 result_label.pack(pady=20)
 
-# เริ่มโปรแกรม
+# กำหนด Global Hotkey สำหรับ F7
+keyboard.add_hotkey('F7', toggle_recording)
+
+# เริ่มโปรแกรม Tkinter
 root.mainloop()
